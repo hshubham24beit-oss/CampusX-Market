@@ -7,6 +7,7 @@ import {
     removeProduct
 } from "./product.controller.js";
 import { protect } from "../../middleware/auth.middleware.js";
+import upload from "../../middleware/upload.middleware.js";
 
 
 const router = express.Router();
@@ -32,10 +33,11 @@ router.get(
     getProducts
 );
 
-router.post(
-    "/",
+router.put(
+    "/:id",
     protect,
-    addProduct
+    upload.array("images",5),
+    editProduct
 );
 
 

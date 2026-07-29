@@ -2,9 +2,11 @@ import {
     createProduct,
     getAllProducts,
     getProductById,
-    updateProduct,
+    updateProduct as updateProductService,
     deleteProduct
 } from "./product.service.js";
+import uploadToCloudinary from "../../utils/uploadToCloudinary.js";
+
 
 export const addProduct = async(req,res)=>{
 
@@ -12,10 +14,43 @@ export const addProduct = async(req,res)=>{
     try{
 
 
+        let imageUrls = [];
+
+
+        // Upload images to Cloudinary
+
+        if(req.files && req.files.length > 0){
+
+
+            for(const file of req.files){
+
+
+                const url = await uploadToCloudinary(
+                    file.buffer
+                );
+
+
+                imageUrls.push(url);
+
+
+            }
+
+        }
+
+
+
         const product = await createProduct(
-            req.body,
+
+            {
+                ...req.body,
+
+                images:imageUrls
+            },
+
             req.user.id
+
         );
+
 
 
         res.status(201).json({
@@ -118,15 +153,60 @@ export const editProduct = async(req,res)=>{
 
     try{
 
-        const product = await updateProduct(
+
+        let imageUrls = [];
+
+
+        // Upload new images if provided
+
+        if(req.files && req.files.length > 0){
+
+
+            for(const file of req.files){
+
+
+                const url = await uploadToCloudinary(
+                    file.buffer
+                );
+
+
+                imageUrls.push(url);
+
+            }
+
+        }
+
+
+
+        const updateData = {
+
+
+            ...req.body
+
+        };
+
+
+
+        // Add images only when new images are uploaded
+
+        if(imageUrls.length > 0){
+
+            updateData.images = imageUrls;
+
+        }
+
+
+
+        const product = await updateProductService(
 
             req.params.id,
 
             req.user.id,
 
-            req.body
+            updateData
 
         );
+
 
 
         res.status(200).json({
@@ -143,6 +223,7 @@ export const editProduct = async(req,res)=>{
     }
     catch(error){
 
+
         res.status(400).json({
 
             success:false,
@@ -150,6 +231,7 @@ export const editProduct = async(req,res)=>{
             message:error.message
 
         });
+
 
     }
 

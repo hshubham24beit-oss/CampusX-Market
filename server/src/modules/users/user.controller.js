@@ -3,7 +3,7 @@ import {
     updateProfile,
     getUserProfileById
 } from "./user.service.js";
-
+import uploadToCloudinary from "../../utils/uploadToCloudinary.js";
 
 export const getMyProfile = async (req, res) => {
 
@@ -32,29 +32,63 @@ export const updateMyProfile = async (req, res) => {
 
     try {
 
+
+        let updateData = {
+            ...req.body
+        };
+
+
+        // Upload profile image if provided
+
+        if(req.file){
+
+
+            const imageUrl = await uploadToCloudinary(
+                req.file.buffer
+            );
+
+
+            updateData.profileImage = imageUrl;
+
+        }
+
+
+
         const user = await updateProfile(
+
             req.user.id,
-            req.body
+
+            updateData
+
         );
 
+
         res.status(200).json({
-            success: true,
-            message: "Profile updated successfully",
-            data: user
+
+            success:true,
+
+            message:"Profile updated successfully",
+
+            data:user
+
         });
 
-    } catch (error) {
+
+    } 
+    catch(error) {
+
 
         res.status(400).json({
-            success: false,
-            message: error.message
+
+            success:false,
+
+            message:error.message
+
         });
 
     }
 
 };
-
-
 export const getUserById = async (req, res) => {
 
     try {

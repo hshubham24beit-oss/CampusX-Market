@@ -5,12 +5,18 @@ import {
     updateMyProfile,
     getUserById
 } from "./user.controller.js";
+import upload from "../../middleware/upload.middleware.js";
 
 const router = express.Router();
 
 router.get("/profile", protect, getMyProfile);
 
-router.put("/profile", protect, updateMyProfile);
+router.put(
+    "/profile",
+    protect,
+    upload.single("profileImage"),
+    updateMyProfile
+);
 
 router.get("/:id", getUserById);
 
