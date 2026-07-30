@@ -17,26 +17,139 @@ export const createProduct = async(productData,userId)=>{
 
 };
 
-export const getAllProducts = async () => {
+export const getAllProducts = async (query) => {
 
-            const products = await Product.find({
-            status:"available"
-        })
-        .populate(
-            "seller",
-            "fullName email department year profileImage"
-        )
-        .populate(
-            "category",
-            "name description"
-        )
-        .sort({
-            createdAt:-1
-        });
+    const filter = {
+
+        status: "available"
+
+    };
 
 
-    return products;
+    // Search by title or description
 
+    if(query.search){
+
+        filter.$or = [
+
+            {
+                title:{
+                    $regex: query.search,
+                    $options:"i"
+                }
+            },
+
+            {
+                description:{
+                    $regex: query.search,
+                    $options:"i"
+                }
+            }
+
+        ];
+
+    }
+
+        // Filter by category
+
+    if (query.category) {
+
+        filter.category = query.category;
+
+    }
+
+        // Price Filter
+
+    if (query.minPrice || query.maxPrice) {
+
+        filter.price = {};
+
+        if (query.minPrice) {
+            filter.price.$gte = Number(query.minPrice);
+        }
+
+        if (query.maxPrice) {
+            filter.price.$lte = Number(query.maxPrice);
+        }
+
+    }
+
+        // Condition Filter
+
+    if (query.condition) {
+
+        filter.condition = query.condition;
+
+    }
+
+        let sortOption = {
+        createdAt: -1
+    };
+
+    if (query.sort === "priceLow") {
+
+        sortOption = {
+            price: 1
+        };
+
+    }
+    else if (query.sort === "priceHigh") {
+
+        sortOption = {
+            price: -1
+        };
+
+    }
+    else if (query.sort === "latest") {
+
+        sortOption = {
+            createdAt: -1
+        };
+
+    }
+
+    const page = Number(query.page) || 1;
+
+    const limit = Number(query.limit) || 10;
+
+    const skip = (page - 1) * limit;
+
+const products = await Product.find(filter)
+
+    .populate(
+        "seller",
+        "fullName email department year profileImage"
+    )
+
+    .populate(
+        "category",
+        "name description"
+    )
+
+    .sort(sortOption)
+
+    .skip(skip)
+
+    .limit(limit);
+
+    const totalProducts = await Product.countDocuments(filter);
+
+    const totalPages = Math.ceil(totalProducts / limit);
+
+
+    return {
+
+    products,
+
+    page,
+
+    limit,
+
+    totalPages,
+
+    totalProducts
+
+};
 };
 
 export const getProductById = async (productId) => {

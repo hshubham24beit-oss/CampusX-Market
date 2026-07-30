@@ -87,18 +87,25 @@ export const getProducts = async(req,res)=>{
     try{
 
 
-        const products = await getAllProducts();
-
+        const result = await getAllProducts(req.query);
 
         res.status(200).json({
 
-            success:true,
+    success: true,
 
-            count:products.length,
+    count: result.products.length,
 
-            data:products
+    page: result.page,
 
-        });
+    limit: result.limit,
+
+    totalPages: result.totalPages,
+
+    totalProducts: result.totalProducts,
+
+    data: result.products
+
+    });
 
 
     }
