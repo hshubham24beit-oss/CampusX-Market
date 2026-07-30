@@ -83,6 +83,16 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
 
+        verificationOTP: {
+      type: String,
+      default: null,
+    },
+
+    verificationOTPExpires: {
+      type: Date,
+      default: null,
+    },
+
     isBlocked: {
       type: Boolean,
       default: false,
