@@ -93,6 +93,16 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+        googleId: {
+        type: String,
+        default: ""
+    },
+
+    authProvider: {
+        type: String,
+        default: "local"
+    },
+
     isBlocked: {
       type: Boolean,
       default: false,
