@@ -2,7 +2,8 @@ import express from "express";
 import {
     register,
     login,
-    verifyEmail
+    verifyEmail,
+    googleAuth
 } from "./auth.controller.js";
 import { registerValidation } from "../../validators/auth.validator.js";
 import sendEmail from "../../utils/sendEmail.js";
@@ -14,6 +15,11 @@ router.post("/register", registerValidation, register);
 router.post("/login", login);
 
 router.post("/verify-email", verifyEmail);
+
+router.post(
+    "/google-login",
+    googleAuth
+);
 
 router.post("/test-email", async (req, res) => {
 

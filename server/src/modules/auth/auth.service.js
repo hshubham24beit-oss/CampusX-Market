@@ -2,6 +2,11 @@ import bcrypt from "bcryptjs";
 import User from "../users/user.model.js";
 import jwt from "jsonwebtoken";
 import sendEmail from "../../utils/sendEmail.js";
+import { OAuth2Client } from "google-auth-library";
+
+const googleClient = new OAuth2Client(
+  process.env.GOOGLE_CLIENT_ID
+);
 
 export const registerUser = async (userData) => {
   const {
@@ -47,11 +52,11 @@ export const registerUser = async (userData) => {
   department,
   year,
   phone,
-
+  
   verificationOTP: otp,
   verificationOTPExpires: otpExpiry,
 
-  isVerified: false,
+  isVerified:true,
   });
 
     await sendEmail({
@@ -183,5 +188,107 @@ export const verifyEmailOTP = async (email, otp) => {
     return {
         message: "Email verified successfully."
     };
+
+};
+
+export const googleLogin = async (token) => {
+
+  const ticket = await googleClient.verifyIdToken({
+
+    idToken: token,
+
+    audience: process.env.GOOGLE_CLIENT_ID
+
+  });
+
+
+  const payload = ticket.getPayload();
+
+
+  const {
+    name,
+    email,
+    picture
+  } = payload;
+
+
+  // Check college email
+
+  if (!email.endsWith("@student.mes.ac.in")) {
+
+    throw new Error(
+      "Please use your official college Google account."
+    );
+
+  }
+
+
+  let user = await User.findOne({
+    email
+  });
+
+
+  // New Google user
+
+  if (!user) {
+
+    user = await User.create({
+
+      fullName: name,
+
+      email,
+
+      profileImage: picture,
+
+      role: "student",
+
+
+      authProvider:"google",
+
+      isVerified: true
+
+    });
+
+  }
+
+
+  if (user.isBlocked) {
+
+    throw new Error(
+      "Your account has been blocked."
+    );
+
+  }
+
+
+  const jwtToken = jwt.sign(
+
+    {
+      id: user._id,
+      email: user.email,
+      role: user.role
+    },
+
+    process.env.JWT_SECRET,
+
+    {
+      expiresIn: "7d"
+    }
+
+  );
+
+
+  const userResponse = user.toObject();
+
+  delete userResponse.password;
+
+
+  return {
+
+    user: userResponse,
+
+    token: jwtToken
+
+  };
 
 };

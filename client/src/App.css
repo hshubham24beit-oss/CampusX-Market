@@ -1,0 +1,699 @@
+:root {
+  --primary: #6c5ce7;
+  --primary-light: #eeecfd;
+  --text-dark: #2d3436;
+  --text-muted: #636e72;
+  --bg-light: #f8f9fd;
+  --card-bg: #ffffff;
+  --border-color: #dfe6e9;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 4rem;
+  background-color: var(--card-bg);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 800;
+  font-size: 1.2rem;
+}
+
+.logo-icon {
+  background-color: var(--primary);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 2rem;
+}
+
+.navbar-links a {
+  text-decoration: none;
+  color: var(--text-dark);
+  font-weight: 500;
+}
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.auth-btn {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Hero */
+.hero-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--primary-light);
+  margin: 2rem 4rem;
+  padding: 3rem;
+  border-radius: 20px;
+}
+
+.hero-content h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+}
+
+.hero-content .highlight {
+  color: var(--primary);
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  padding: 0.8rem 1.6rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: var(--text-dark);
+  border: 1px solid var(--border-color);
+  padding: 0.8rem 1.6rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Category Grid */
+.categories-section {
+  padding: 0 4rem 2rem 4rem;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.category-card {
+  background: white;
+  padding: 1.2rem;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  cursor: pointer;
+}
+
+.category-icon {
+  font-size: 1.5rem;
+  color: var(--primary);
+  margin-bottom: 0.5rem;
+}
+
+/* Layout & Headers */
+.categories-section,
+.featured-section {
+  max-width: 1200px;
+  margin: 0 auto 3rem auto;
+  padding: 0 1.5rem;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.2rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2d3436;
+  margin: 0;
+}
+
+.section-subtitle {
+  color: #636e72;
+  margin: 0.25rem 0 0 0;
+  font-size: 0.9rem;
+}
+
+.view-all-link,
+.view-all-btn {
+  color: #6c5ce7;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+/* Product Grid */
+.products-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+/* Product Card Styling */
+.product-card {
+  background: #ffffff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  border: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(108, 92, 231, 0.12);
+}
+
+.product-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  background-color: #f8f9fd;
+}
+
+.product-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.wishlist-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #b2bec3;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.wishlist-btn .liked {
+  color: #e84393;
+}
+
+.product-info {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.product-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2d3436;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-price {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2d3436;
+}
+
+.product-condition {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: #636e72;
+  background-color: #f1f2f6;
+  padding: 2px 8px;
+  border-radius: 4px;
+  width: fit-content;
+}
+
+/* Container & Two-Column Layout */
+.home-dashboard-container {
+  display: flex;
+  gap: 1.5rem;
+  max-width: 1280px;
+  margin: 1.5rem auto;
+  padding: 0 1.5rem;
+}
+
+.main-feed {
+  flex: 1;
+  min-width: 0; /* Prevents overflow */
+}
+
+.sidebar-feed {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+/* Sidebar Cards Common */
+.sidebar-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 1.2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+  border: 1px solid #f0f0f0;
+}
+
+/* User Card */
+.user-card .user-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.welcome-text {
+  font-size: 0.8rem;
+  color: #636e72;
+}
+
+.name-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.name-tag h4 {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #2d3436;
+}
+
+.badge-student {
+  background: #eeecfd;
+  color: #6c5ce7;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.user-dept {
+  font-size: 0.8rem;
+  color: #b2bec3;
+  margin: 4px 0 12px 0;
+}
+
+.user-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.view-profile-link {
+  color: #6c5ce7;
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Why CampusX Card */
+.why-card h4 {
+  margin: 0 0 0.8rem 0;
+  font-size: 0.95rem;
+}
+
+.why-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.why-card li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: #2d3436;
+}
+
+.why-card .icon {
+  color: #6c5ce7;
+}
+
+/* Recent Chats Card */
+.chats-card .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.chats-card h4 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.chats-card .view-all {
+  color: #6c5ce7;
+  font-size: 0.8rem;
+  text-decoration: none;
+}
+
+.chats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.chat-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.chat-item img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.chat-body {
+  flex: 1;
+}
+
+.chat-title {
+  display: flex;
+  justify-content: space-between;
+}
+
+.chat-title h5 {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.chat-time {
+  font-size: 0.7rem;
+  color: #b2bec3;
+}
+
+.chat-body p {
+  margin: 2px 0 0 0;
+  font-size: 0.75rem;
+  color: #636e72;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 180px;
+}
+
+/* Sell Banner Card */
+.sell-banner-card {
+  background: #f3f0ff;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sell-card-content h4 {
+  margin: 0 0 4px 0;
+  color: #6c5ce7;
+  font-size: 0.9rem;
+}
+
+.sell-card-content p {
+  margin: 0 0 10px 0;
+  font-size: 0.75rem;
+  color: #636e72;
+}
+
+.btn-sell-now {
+  background: #6c5ce7;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.sell-card-icon {
+  font-size: 2rem;
+  color: rgba(108, 92, 231, 0.2);
+}
+
+/* ===================================================
+   NAVBAR STYLES
+   =================================================== */
+
+.navbar-wrapper {
+  background-color: #ffffff;
+  border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+/* --- Top Header Row --- */
+.top-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0.75rem 1.5rem;
+  gap: 1.5rem;
+}
+
+/* Brand Logo */
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.brand-logo {
+  background: #6c5ce7;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.brand-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #2d3436;
+}
+
+.brand-name span {
+  color: #6c5ce7;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* Search Bar */
+.search-bar-container {
+  flex: 1;
+  max-width: 480px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-bar-container input {
+  width: 100%;
+  padding: 8px 16px 8px 38px;
+  background-color: #f8f9fd;
+  border: 1px solid #e1e8ed;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-bar-container input:focus {
+  border-color: #6c5ce7;
+  background-color: #ffffff;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  color: #b2bec3;
+  font-size: 0.85rem;
+}
+
+/* Top Navbar Actions (Right Side) */
+.top-navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.sell-btn-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #ffffff;
+  color: #6c5ce7;
+  border: 1.5px solid #6c5ce7;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.sell-btn-nav:hover {
+  background-color: #6c5ce7;
+  color: #ffffff;
+}
+
+/* Icon Badges (Cart, Wishlist, Notifications) */
+.icon-badges {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.badge-item {
+  position: relative;
+  color: #636e72;
+  font-size: 1.1rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.badge-item:hover {
+  color: #6c5ce7;
+}
+
+.badge-item .badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background-color: #6c5ce7;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* User Menu Header */
+.user-profile-menu {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.user-profile-menu:hover {
+  background-color: #f8f9fd;
+}
+
+.avatar-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2d3436;
+}
+
+/* --- Sub Navigation Bar (Links Row) --- */
+.sub-navbar {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  border-top: 1px solid #f5f6fa;
+}
+
+.sub-navbar a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0.75rem 0;
+  color: #636e72;
+  text-decoration: none;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.sub-navbar a:hover,
+.sub-navbar a.active {
+  color: #6c5ce7;
+  border-bottom-color: #6c5ce7;
+  font-weight: 600;
+}

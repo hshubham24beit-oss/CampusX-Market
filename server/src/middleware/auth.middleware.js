@@ -1,63 +1,51 @@
 import jwt from "jsonwebtoken";
-
+import User from "../modules/users/user.model.js";
 
 export const protect = async (req, res, next) => {
-
     try {
 
-        // Get token from header
         const authHeader = req.headers.authorization;
 
-
-        if (!authHeader) {
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
             return res.status(401).json({
-                success:false,
-                message:"No token provided. Please login."
+                success: false,
+                message: "No token provided. Please login."
             });
         }
-
-
-        // Token format:
-        // Bearer token_here
 
         const token = authHeader.split(" ")[1];
-
-
-        if (!token) {
-            return res.status(401).json({
-                success:false,
-                message:"Invalid token format."
-            });
-        }
-
-
-        // Verify token
 
         const decoded = jwt.verify(
             token,
             process.env.JWT_SECRET
         );
 
+        const user = await User.findById(decoded.id).select("-password");
 
-        // Store user information
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: "User not found."
+            });
+        }
 
-        req.user = decoded;
+        if (user.isBlocked) {
+            return res.status(403).json({
+                success: false,
+                message: "Your account has been blocked."
+            });
+        }
 
+        req.user = user;
 
         next();
 
-
-    } catch(error) {
-
+    } catch (error) {
 
         return res.status(401).json({
-
-            success:false,
-
-            message:"Invalid or expired token."
-
+            success: false,
+            message: "Invalid or expired token."
         });
 
     }
-
 };
