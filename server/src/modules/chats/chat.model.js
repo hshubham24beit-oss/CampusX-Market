@@ -40,6 +40,20 @@ const chatSchema = new mongoose.Schema(
         }
     ],
 
+    product:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"Product"
+    },
+
+    lastMessage:{
+        type:String,
+        default:""
+    },
+
+    lastMessageAt:{
+        type:Date,
+        default:Date.now
+    },
 
     messages:[
         messageSchema

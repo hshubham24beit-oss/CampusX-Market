@@ -5,6 +5,7 @@ import { protect } from "../../middleware/auth.middleware.js";
 import {
     addProductToCart,
     getMyCart,
+    updateProductQuantity,
     removeProductFromCart,
     clearMyCart
 } from "./cart.controller.js";
@@ -26,6 +27,14 @@ router.get(
     "/",
     protect,
     getMyCart
+);
+
+
+// Update quantity
+router.put(
+    "/:productId",
+    protect,
+    updateProductQuantity
 );
 
 

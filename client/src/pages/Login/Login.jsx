@@ -1,14 +1,14 @@
 // src/pages/Login/Login.jsx
 import React, { useState, useContext } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 
-export default function Login() {
+export default function Login({ initialSignUp = false }) {
   const navigate = useNavigate();
   const { login, register, handleGoogleLogin } = useContext(AuthContext);
   
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(initialSignUp);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -24,15 +24,40 @@ export default function Login() {
     setLoading(true);
     setError('');
     try {
-      if (isSignUp) {
-        await register({ name, email, password, department, year });
-      } else {
-        await login({ email, password });
-      }
-      navigate('/');
+              if (isSignUp) {
+            await register({
+                fullName: name,
+                email,
+                password,
+                department,
+                year,
+            });
+
+            alert("Registration Successful. Please Login.");
+
+            setIsSignUp(false);
+
+            setPassword("");
+
+            return;
+        }
+
+        await login({
+            email,
+            password,
+        });
+
+      navigate("/");
     } catch (err) {
       console.error('Auth error:', err);
-      setError(err.response?.data?.message || err.message || 'Authentication failed.');
+      const errorData = err.response?.data;
+      
+      // Pull the exact validation message from express-validator or backend response
+      const errorMessage = errorData?.errors?.[0]?.msg || 
+                           errorData?.message || 
+                           err.message || 
+                           'Authentication failed.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -46,7 +71,10 @@ export default function Login() {
       navigate('/');
     } catch (err) {
       console.error('Google login error:', err);
-      setError('Google sign-in failed on server.');
+      setError(
+        err.response?.data?.message ||
+        'Google sign-in failed. Please try again.'
+      );
     } finally {
       setLoading(false);
     }
@@ -160,7 +188,7 @@ export default function Login() {
               </div>
               {!isSignUp && (
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
-                  <a href="#forgot" style={styles.forgotLink}>Forgot Password?</a>
+                  <Link to="/forgot-password" style={styles.forgotLink}>Forgot Password?</Link>
                 </div>
               )}
             </div>
@@ -169,20 +197,35 @@ export default function Login() {
               <div style={styles.rowGroup}>
                 <div style={styles.inputGroup}>
                   <label style={styles.label}>Department</label>
-                  <select value={department} onChange={(e) => setDepartment(e.target.value)} style={styles.input}>
+                  <select
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                    style={styles.input}
+                  >
+                    <option value="CE">Computer Engineering</option>
+                    <option value="IT">Information Technology</option>
+                    <option value="AIDS">Artificial Intelligence & Data Science</option>
+                    <option value="AIML">Artificial Intelligence & Machine Learning</option>
+                    <option value="EXTC">Electronics & Telecommunication</option>
+                    <option value="ME">Mechanical Engineering</option>
+                    <option value="CIVIL">Civil Engineering</option>
+                    <option value="EE">Electrical Engineering</option>
+                    <option value="MCA">MCA</option>
+                    <option value="MBA">MBA</option>
                     <option value="OTHER">Other</option>
-                    <option value="CS">Computer Science</option>
-                    <option value="IT">Information Tech</option>
-                    <option value="ECE">Electronics</option>
                   </select>
                 </div>
                 <div style={styles.inputGroup}>
                   <label style={styles.label}>Year</label>
-                  <select value={year} onChange={(e) => setYear(e.target.value)} style={styles.input}>
+                  <select
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    style={styles.input}
+                  >
                     <option value="FY">First Year</option>
                     <option value="SY">Second Year</option>
                     <option value="TY">Third Year</option>
-                    <option value="BTECH">Final Year</option>
+                    <option value="Final">Final Year</option>
                   </select>
                 </div>
               </div>

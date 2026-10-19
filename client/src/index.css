@@ -405,3 +405,179 @@ body {
   font-size: 2rem;
   color: rgba(108, 92, 231, 0.2);
 }
+
+/* ===================================================
+   GLOBAL POLISH LAYER
+   =================================================== */
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Remove the blue tap flash on mobile + nicer selection colour */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: #6c5ce7;
+  color: #ffffff;
+}
+
+/* Keyboard-only focus ring for accessibility */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid rgba(99, 102, 241, 0.55);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+
+/* ---------- Elegant scrollbars ---------- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #ccd2e6 transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ccd2e6;
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a9b0cf;
+  background-clip: content-box;
+}
+
+/* Hide scrollbar but keep scrolling (horizontal chip rows, carousels) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---------- Animations (used across the app) ---------- */
+@keyframes cxFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cxFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cxScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes cxSlideInBottom {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes cxFloat {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes cxShimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-fade-in {
+  animation: cxFadeIn 0.35s ease both;
+}
+
+.animate-fade-up {
+  animation: cxFadeUp 0.5s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+.animate-scale-in {
+  animation: cxScaleIn 0.25s ease both;
+}
+
+.animate-float {
+  animation: cxFloat 4.5s ease-in-out infinite;
+}
+
+/* tailwindcss-animate compatible helpers */
+.animate-in {
+  animation-duration: 0.2s;
+  animation-fill-mode: both;
+}
+
+.animate-in.fade-in {
+  animation-name: cxFadeIn;
+}
+
+.animate-in.zoom-in-95 {
+  animation-name: cxScaleIn;
+}
+
+.animate-in.slide-in-from-bottom {
+  animation-name: cxSlideInBottom;
+  animation-duration: 0.3s;
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

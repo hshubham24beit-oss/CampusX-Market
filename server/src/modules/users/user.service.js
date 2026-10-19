@@ -18,7 +18,9 @@ export const updateProfile = async (userId, updateData) => {
         "fullName",
         "phone",
         "bio",
-        "profileImage"
+        "profileImage",
+        "department",
+        "year"
     ];
 
     const filteredData = {};
@@ -56,7 +58,7 @@ export const getUserProfileById = async (userId) => {
 
     const user = await User.findById(userId)
         .select(
-            "fullName department year profileImage bio averageRating totalRatings"
+            "fullName email department year phone profileImage bio averageRating totalRatings"
         );
 
     if (!user) {

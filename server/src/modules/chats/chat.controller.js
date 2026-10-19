@@ -14,7 +14,8 @@ export const createNewChat = async(req,res)=>{
 
         const chat = await createChat(
             req.user.id,
-            req.body.userId
+            req.body.userId,
+            req.body.productId
         );
 
 

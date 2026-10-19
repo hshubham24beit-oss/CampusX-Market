@@ -1,6 +1,52 @@
 import Review from "./review.model.js";
 import Product from "../products/product.model.js";
+import User from "../users/user.model.js";
 import { createNotification } from "../notifications/notification.service.js";
+
+const recomputeRatings = async (productId) => {
+  const product = await Product.findById(productId);
+
+  if (!product) {
+    return;
+  }
+
+  const productReviews = await Review.find({ product: productId });
+  const totalRatings = productReviews.length;
+
+  product.totalRatings = totalRatings;
+  product.averageRating = totalRatings
+    ? Number(
+        (
+          productReviews.reduce((sum, item) => sum + item.rating, 0) /
+          totalRatings
+        ).toFixed(1)
+      )
+    : 0;
+
+  await product.save();
+
+  const sellerProducts = await Product.find({ seller: product.seller }).select(
+    "_id"
+  );
+
+  const sellerReviews = await Review.find({
+    product: { $in: sellerProducts.map((item) => item._id) },
+  });
+
+  const sellerTotal = sellerReviews.length;
+
+  await User.findByIdAndUpdate(product.seller, {
+    totalRatings: sellerTotal,
+    averageRating: sellerTotal
+      ? Number(
+          (
+            sellerReviews.reduce((sum, item) => sum + item.rating, 0) /
+            sellerTotal
+          ).toFixed(1)
+        )
+      : 0,
+  });
+};
 
 // Add review
 export const addReview = async (
@@ -84,42 +130,7 @@ export const addReview = async (
 
 
 
-    // Update seller rating
-
-    const reviews = await Review.find({
-
-        product:productId
-
-    });
-
-
-    const totalRatings = reviews.length;
-
-
-    const averageRating =
-        reviews.reduce(
-            (sum,item)=>
-                sum + item.rating,
-            0
-        ) / totalRatings;
-
-
-
-    await Product.findByIdAndUpdate(
-
-        productId,
-
-        {
-            averageRating:
-            Number(averageRating.toFixed(1)),
-
-            totalRatings
-
-        }
-
-    );
-
-
+    await recomputeRatings(productId);
 
     return review;
 
@@ -203,7 +214,7 @@ export const updateReview = async(
 
     await review.save();
 
-
+    await recomputeRatings(review.product);
 
     return review;
 
@@ -248,7 +259,7 @@ export const deleteReview = async(
 
     await Review.findByIdAndDelete(reviewId);
 
-
+    await recomputeRatings(review.product);
 
     return review;
 

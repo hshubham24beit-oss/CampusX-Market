@@ -1,12 +1,48 @@
 import bcrypt from "bcryptjs";
-import User from "../users/user.model.js";
+import crypto from "crypto";
 import jwt from "jsonwebtoken";
-import sendEmail from "../../utils/sendEmail.js";
 import { OAuth2Client } from "google-auth-library";
+import User from "../users/user.model.js";
+import sendEmail from "../../utils/sendEmail.js";
 
-const googleClient = new OAuth2Client(
-  process.env.GOOGLE_CLIENT_ID
-);
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const DEPARTMENTS = [
+  "CE",
+  "IT",
+  "AIDS",
+  "AIML",
+  "EXTC",
+  "ME",
+  "CIVIL",
+  "EE",
+  "MCA",
+  "MBA",
+  "OTHER",
+];
+
+const YEARS = ["FY", "SY", "TY", "Final"];
+
+const signToken = (user) =>
+  jwt.sign(
+    {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: "7d",
+    }
+  );
+
+const toSafeUser = (user) => {
+  const userResponse = user.toObject();
+  delete userResponse.password;
+  delete userResponse.verificationOTP;
+  delete userResponse.verificationOTPExpires;
+  return userResponse;
+};
 
 export const registerUser = async (userData) => {
   const {
@@ -18,277 +54,236 @@ export const registerUser = async (userData) => {
     phone,
   } = userData;
 
-  // Check required fields
   if (!fullName || !email || !password || !department || !year) {
-    throw new Error("All required fields must be filled.");
+    throw new Error("All fields are required.");
   }
 
-  // Validate college email
-  if (!email.endsWith("@student.mes.ac.in")) {
-    throw new Error("Please use your official college email.");
+  const normalizedEmail = String(email).toLowerCase().trim();
+
+  if (!normalizedEmail.endsWith("@student.mes.ac.in")) {
+    throw new Error("Only college students can register.");
   }
 
-  // Check if user already exists
-  const existingUser = await User.findOne({ email });
+  const existingUser = await User.findOne({ email: normalizedEmail });
 
   if (existingUser) {
-    throw new Error("Email is already registered.");
+    throw new Error("Email already registered.");
   }
 
-  // Hash password
   const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Generate 6-digit OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-  // OTP expires in 10 minutes
-  const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
-
-  // Create user
   const user = await User.create({
-  fullName,
-  email,
-  password: hashedPassword,
-  department,
-  year,
-  phone,
-  
-  verificationOTP: otp,
-  verificationOTPExpires: otpExpiry,
-
-  isVerified:true,
+    fullName,
+    email: normalizedEmail,
+    password: hashedPassword,
+    department,
+    year,
+    phone,
   });
 
-    await sendEmail({
-
-    to: email,
-
-    subject: "CampusX Market - Email Verification",
-
-    html: `
-      <h2>Welcome to CampusX Market 🎉</h2>
-
-      <p>Your email verification OTP is:</p>
-
-      <h1 style="letter-spacing:5px;">${otp}</h1>
-
-      <p>This OTP is valid for <strong>10 minutes</strong>.</p>
-
-      <p>If you didn't create this account, you can ignore this email.</p>
-    `
-
-  });
-
-  // Don't return password
   const userResponse = user.toObject();
   delete userResponse.password;
 
-    return {
-
-    message: "Registration successful. Please verify your email.",
-
-    email: user.email
-
-  };
+  return userResponse;
 };
 
 export const loginUser = async (email, password) => {
-
   if (!email || !password) {
-    throw new Error("Email and password are required.");
+    throw new Error("Email and Password are required.");
   }
 
+  const normalizedEmail = String(email).toLowerCase().trim();
 
-  const user = await User.findOne({ email });
-
+  const user = await User.findOne({ email: normalizedEmail });
 
   if (!user) {
-    throw new Error("Invalid email or password.");
+    throw new Error("Invalid Email or Password.");
   }
-
 
   if (user.isBlocked) {
     throw new Error("Your account has been blocked.");
   }
 
-    if (!user.isVerified) {
+  if (user.authProvider === "google" && !user.password) {
+    throw new Error("Please login with Google.");
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    if (user.authProvider === "google") {
       throw new Error(
-          "Please verify your college email before logging in."
+        "This account was created with Google. Use Continue with Google, or reset your password with Forgot Password."
       );
-  }
-
-
-  const isPasswordCorrect = await bcrypt.compare(
-    password,
-    user.password
-  );
-
-
-  if (!isPasswordCorrect) {
-    throw new Error("Invalid email or password.");
-  }
-
-
-  const token = jwt.sign(
-
-    {
-      id: user._id,
-      email: user.email,
-      role: user.role
-    },
-
-    process.env.JWT_SECRET,
-
-    {
-      expiresIn: "7d"
     }
 
-  );
-
-
-  const userResponse = user.toObject();
-
-  delete userResponse.password;
-
+    throw new Error("Invalid Email or Password.");
+  }
 
   return {
-    user: userResponse,
-    token
+    user: toSafeUser(user),
+    token: signToken(user),
   };
-
 };
 
+const GENERIC_RESET_MESSAGE =
+  "If an account with that email exists, a password reset link has been sent.";
 
-export const verifyEmailOTP = async (email, otp) => {
+export const forgotPassword = async (email) => {
+  if (!email) {
+    throw new Error("Email is required.");
+  }
 
-    const user = await User.findOne({ email });
+  const user = await User.findOne({
+    email: String(email).toLowerCase().trim(),
+  });
 
-    if (!user) {
-        throw new Error("User not found.");
+  if (!user) {
+    return { message: GENERIC_RESET_MESSAGE };
+  }
+
+  const rawToken = crypto.randomBytes(32).toString("hex");
+
+  user.resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(rawToken)
+    .digest("hex");
+  user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+
+  await user.save();
+
+  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+  const resetUrl = `${clientUrl}/reset-password/${rawToken}`;
+
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: "CampusX Market - Reset Your Password",
+      html: `
+        <h2>Reset your CampusX Market password</h2>
+        <p>Click the link below to choose a new password. This link expires in 15 minutes.</p>
+        <p><a href="${resetUrl}">Reset Password</a></p>
+        <p>If you did not request this, you can safely ignore this email.</p>
+      `,
+    });
+  } catch (error) {
+    console.error("Password reset email failed:", error.message);
+
+    if (process.env.NODE_ENV !== "production") {
+      console.log("Password reset URL:", resetUrl);
+    }
+  }
+
+  return { message: GENERIC_RESET_MESSAGE };
+};
+
+export const resetPassword = async (token, password) => {
+  if (!token || !password) {
+    throw new Error("Reset token and new password are required.");
+  }
+
+  if (password.length < 6) {
+    throw new Error("Password must be at least 6 characters long.");
+  }
+
+  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken: hashedToken,
+    resetPasswordExpires: { $gt: new Date() },
+  });
+
+  if (!user) {
+    throw new Error("This reset link is invalid or has expired.");
+  }
+
+  user.password = await bcrypt.hash(password, 10);
+  user.resetPasswordToken = null;
+  user.resetPasswordExpires = null;
+  user.isVerified = true;
+
+  await user.save();
+
+  return { message: "Password reset successfully. You can now log in." };
+};
+
+export const googleLogin = async ({ token, department, year }) => {
+  if (!token) {
+    throw new Error("Google credential is required.");
+  }
+
+  if (!process.env.GOOGLE_CLIENT_ID) {
+    throw new Error("Google login is not configured on the server.");
+  }
+
+  let payload;
+
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    payload = ticket.getPayload();
+  } catch (error) {
+    throw new Error("Invalid or expired Google credential.");
+  }
+
+  if (!payload?.email) {
+    throw new Error("Google account does not contain an email.");
+  }
+
+  if (!payload.email_verified) {
+    throw new Error("Your Google email is not verified.");
+  }
+
+  const email = payload.email.toLowerCase();
+
+  if (!email.endsWith("@student.mes.ac.in")) {
+    throw new Error("Please use your official college Google account.");
+  }
+
+  let user = await User.findOne({ email });
+
+  if (user) {
+    if (user.isBlocked) {
+      throw new Error("Your account has been blocked.");
     }
 
-    if (user.isVerified) {
-        throw new Error("Email is already verified.");
+    if (!user.googleId) {
+      user.googleId = payload.sub;
     }
 
-    if (user.verificationOTP !== otp) {
-        throw new Error("Invalid OTP.");
-    }
-
-    if (new Date() > user.verificationOTPExpires) {
-        throw new Error("OTP has expired.");
+    if (!user.profileImage && payload.picture) {
+      user.profileImage = payload.picture;
     }
 
     user.isVerified = true;
-    user.verificationOTP = null;
-    user.verificationOTPExpires = null;
 
     await user.save();
-
-    return {
-        message: "Email verified successfully."
-    };
-
-};
-
-export const googleLogin = async (token) => {
-
-  const ticket = await googleClient.verifyIdToken({
-
-    idToken: token,
-
-    audience: process.env.GOOGLE_CLIENT_ID
-
-  });
-
-
-  const payload = ticket.getPayload();
-
-
-  const {
-    name,
-    email,
-    picture
-  } = payload;
-
-
-  // Check college email
-
-  if (!email.endsWith("@student.mes.ac.in")) {
-
-    throw new Error(
-      "Please use your official college Google account."
+  } else {
+    const randomPassword = await bcrypt.hash(
+      crypto.randomBytes(32).toString("hex"),
+      10
     );
-
-  }
-
-
-  let user = await User.findOne({
-    email
-  });
-
-
-  // New Google user
-
-  if (!user) {
 
     user = await User.create({
-
-      fullName: name,
-
+      fullName: payload.name || email.split("@")[0],
       email,
-
-      profileImage: picture,
-
-      role: "student",
-
-
-      authProvider:"google",
-
-      isVerified: true
-
+      password: randomPassword,
+      department: DEPARTMENTS.includes(department) ? department : "OTHER",
+      year: YEARS.includes(year) ? year : "FY",
+      profileImage: payload.picture || "",
+      googleId: payload.sub,
+      authProvider: "google",
+      isVerified: true,
     });
-
   }
-
-
-  if (user.isBlocked) {
-
-    throw new Error(
-      "Your account has been blocked."
-    );
-
-  }
-
-
-  const jwtToken = jwt.sign(
-
-    {
-      id: user._id,
-      email: user.email,
-      role: user.role
-    },
-
-    process.env.JWT_SECRET,
-
-    {
-      expiresIn: "7d"
-    }
-
-  );
-
-
-  const userResponse = user.toObject();
-
-  delete userResponse.password;
-
 
   return {
-
-    user: userResponse,
-
-    token: jwtToken
-
+    user: toSafeUser(user),
+    token: signToken(user),
   };
-
 };
+
+

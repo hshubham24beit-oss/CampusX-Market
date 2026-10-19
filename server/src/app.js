@@ -14,7 +14,7 @@ import chatRoutes from "./modules/chats/chat.routes.js";
 import reviewRoutes from "./modules/reviews/review.routes.js";
 import notificationRoutes from "./modules/notifications/notification.routes.js";
 import orderRoutes from "./modules/orders/order.routes.js";
-
+import requestRoutes from "./modules/requests/request.routes.js";
 const app = express();
 
 // Middlewares
@@ -34,12 +34,13 @@ app.use("/api/chats",chatRoutes);
 app.use("/api/reviews",reviewRoutes);
 app.use("/api/notifications",notificationRoutes);
 app.use("/api/orders",orderRoutes);
+app.use("/api/requests", requestRoutes);
 
 // Test Route
 app.get("/", (req, res) => {
     res.status(200).json({
         success: true,
-        message: "🚀 CampusX Market Backend is Running Successfully!"
+        message: "CampusX Market Backend is Running Successfully!"
     });
 });
 
@@ -51,6 +52,38 @@ app.get("/api/test-auth", protect, (req,res)=>{
         user:req.user
     });
 
+});
+
+// 404 Handler
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: `Route not found: ${req.method} ${req.originalUrl}`
+    });
+});
+
+// Global Error Handler
+app.use((error, req, res, next) => {
+    console.error("Unhandled error:", error);
+
+    if (res.headersSent) {
+        return next(error);
+    }
+
+    if (error.name === "MulterError") {
+        return res.status(400).json({
+            success: false,
+            message:
+                error.code === "LIMIT_FILE_SIZE"
+                    ? "Image is too large. Maximum size is 5MB."
+                    : error.message
+        });
+    }
+
+    res.status(error.status || 500).json({
+        success: false,
+        message: error.message || "Internal server error."
+    });
 });
 
 export default app;

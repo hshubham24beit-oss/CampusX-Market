@@ -3,7 +3,7 @@ import Product from "../products/product.model.js";
 
 
 // Add product to cart
-export const addToCart = async (userId, productId) => {
+export const addToCart = async (userId, productId, quantity = 1) => {
 
     // Check product exists
     const product = await Product.findById(productId);
@@ -14,8 +14,15 @@ export const addToCart = async (userId, productId) => {
 
 
     // Check product availability
-    if (product.status === "sold") {
-        throw new Error("Product is already sold.");
+    if (product.status !== "available") {
+        throw new Error("Product is not available.");
+    }
+
+
+    const qty = Math.max(Number(quantity) || 1, 1);
+
+    if (qty > (product.quantity || 1)) {
+        throw new Error("Requested quantity is not available.");
     }
 
 
@@ -32,7 +39,8 @@ export const addToCart = async (userId, productId) => {
             user: userId,
             items: [
                 {
-                    product: productId
+                    product: productId,
+                    quantity: qty
                 }
             ]
         });
@@ -55,12 +63,57 @@ export const addToCart = async (userId, productId) => {
 
     // Add product
     cart.items.push({
-        product: productId
+        product: productId,
+        quantity: qty
     });
 
 
     await cart.save();
 
+
+    return cart;
+};
+
+
+
+// Update item quantity
+export const updateCartItem = async (userId, productId, quantity) => {
+
+    const qty = Number(quantity);
+
+    if (!Number.isInteger(qty) || qty < 1) {
+        throw new Error("Quantity must be a positive number.");
+    }
+
+    const product = await Product.findById(productId);
+
+    if (!product) {
+        throw new Error("Product not found.");
+    }
+
+    if (qty > (product.quantity || 1)) {
+        throw new Error("Requested quantity is not available.");
+    }
+
+    const cart = await Cart.findOne({
+        user: userId
+    });
+
+    if (!cart) {
+        throw new Error("Cart not found.");
+    }
+
+    const item = cart.items.find(
+        (entry) => entry.product.toString() === productId
+    );
+
+    if (!item) {
+        throw new Error("Product is not in your cart.");
+    }
+
+    item.quantity = qty;
+
+    await cart.save();
 
     return cart;
 };

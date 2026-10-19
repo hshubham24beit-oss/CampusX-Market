@@ -37,7 +37,7 @@ const productSchema = new mongoose.Schema(
             "New",
             "Like New",
             "Good",
-            "Used"
+            "Fair"
         ],
         default:"Good"
     },
@@ -46,6 +46,47 @@ const productSchema = new mongoose.Schema(
     images:{
         type:[String],
         default:[]
+    },
+
+
+    quantity:{
+        type:Number,
+        default:1,
+        min:1
+    },
+
+
+    pickupLocation:{
+        type:String,
+        trim:true,
+        default:""
+    },
+
+
+    pickupInstructions:{
+        type:String,
+        trim:true,
+        default:""
+    },
+
+
+    views:{
+        type:Number,
+        default:0
+    },
+
+
+    averageRating:{
+        type:Number,
+        default:0,
+        min:0,
+        max:5
+    },
+
+
+    totalRatings:{
+        type:Number,
+        default:0
     },
 
 
@@ -60,6 +101,7 @@ const productSchema = new mongoose.Schema(
         type:String,
         enum:[
             "available",
+            "reserved",
             "sold"
         ],
         default:"available"

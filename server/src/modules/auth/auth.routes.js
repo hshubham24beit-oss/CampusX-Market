@@ -1,12 +1,14 @@
 import express from "express";
 import {
-    register,
-    login,
-    verifyEmail,
-    googleAuth
+  register,
+  login,
+  getCurrentUser,
+  googleAuth,
+  forgotPasswordRequest,
+  resetPasswordRequest,
 } from "./auth.controller.js";
 import { registerValidation } from "../../validators/auth.validator.js";
-import sendEmail from "../../utils/sendEmail.js";
+import { protect } from "../../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -14,52 +16,54 @@ router.post("/register", registerValidation, register);
 
 router.post("/login", login);
 
-router.post("/verify-email", verifyEmail);
+router.post("/google-login", googleAuth);
 
-router.post(
-    "/google-login",
-    googleAuth
-);
+router.post("/forgot-password", forgotPasswordRequest);
 
-router.post("/test-email", async (req, res) => {
+router.post("/reset-password", resetPasswordRequest);
 
-    try {
+router.get("/me", protect, getCurrentUser);
+// router.post("/verify-email", verifyEmail);
 
-        await sendEmail({
+// router.post("/test-email", async (req, res) => {
 
-            to: process.env.EMAIL_USER,
+//     try {
 
-            subject: "CampusX Market Test",
+//         await sendEmail({
 
-            html: `
-                <h2>Email Working Successfully 🎉</h2>
-                <p>If you received this email, Nodemailer is configured correctly.</p>
-            `
+//             to: process.env.EMAIL_USER,
 
-        });
+//             subject: "CampusX Market Test",
 
-        res.json({
+//             html: `
+//                 <h2>Email Working Successfully 🎉</h2>
+//                 <p>If you received this email, Nodemailer is configured correctly.</p>
+//             `
 
-            success: true,
+//         });
 
-            message: "Test email sent successfully."
+//         res.json({
 
-        });
+//             success: true,
 
-    } catch (error) {
+//             message: "Test email sent successfully."
 
-        console.log(error);
+//         });
 
-        res.status(500).json({
+//     } catch (error) {
 
-            success: false,
+//         console.log(error);
 
-            message: error.message
+//         res.status(500).json({
 
-        });
+//             success: false,
 
-    }
+//             message: error.message
 
-});
+//         });
+
+//     }
+
+// });
 
 export default router;

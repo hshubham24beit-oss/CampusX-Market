@@ -1,15 +1,69 @@
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from "react";
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   FaHome, FaThLarge, FaHeart, FaShoppingCart, FaClipboardList, 
-  FaComments, FaPlusCircle, FaUser, FaSearch, FaBell, FaRobot, FaTimes 
+  FaComments, FaPlusCircle, FaUser, FaSearch, FaBell, FaRobot, FaTimes,
+  FaBullhorn
 } from 'react-icons/fa';
+import { AuthContext } from "../context/AuthContext";
+import { CartContext } from "../context/CartContext";
+import { notificationAPI } from "../api/notification.api";
+import Avatar from "../components/common/Avatar";
+import { useNavigate } from "react-router-dom";
 
 export default function MainLayout() {
   const [showAiModal, setShowAiModal] = useState(false);
+  const [search, setSearch] = useState("");
+  const [unreadCount, setUnreadCount] = useState(0);
   const location = useLocation();
+  const { user, logout } = useContext(AuthContext);
+  const { cartCount } = useContext(CartContext);
+  const navigate = useNavigate();
 
   const isActive = (path) => location.pathname === path;
+
+  useEffect(() => {
+    let active = true;
+
+    const fetchUnread = async () => {
+      if (!user) {
+        setUnreadCount(0);
+        return;
+      }
+
+      try {
+        const res = await notificationAPI.getMyNotifications();
+        const notifications = res.data || [];
+
+        if (active) {
+          setUnreadCount(
+            notifications.filter((item) => !item.isRead).length
+          );
+        }
+      } catch (error) {
+        if (active) {
+          setUnreadCount(0);
+        }
+      }
+    };
+
+    fetchUnread();
+
+    return () => {
+      active = false;
+    };
+  }, [user, location.pathname]);
+
+  // Smoothly reset scroll position on route change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [location.pathname]);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    const query = search.trim();
+    navigate(query ? `/products?search=${encodeURIComponent(query)}` : "/products");
+  };
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-[#F4F6F9] text-gray-800 font-sans antialiased pb-20 md:pb-0">
@@ -34,21 +88,36 @@ export default function MainLayout() {
               { path: '/', label: 'Home', icon: <FaHome className="text-lg" /> },
               { path: '/categories', label: 'Categories', icon: <FaThLarge className="text-lg" /> },
               { path: '/wishlist', label: 'Wishlist', icon: <FaHeart className="text-lg" /> },
-              { path: '/cart', label: 'Cart', icon: <FaShoppingCart className="text-lg" />, badge: '2' },
+              {
+                path: '/cart',
+                label: 'Cart',
+                icon: <FaShoppingCart className="text-lg" />,
+                badge: cartCount > 0 ? cartCount : null,
+              },
               { path: '/orders', label: 'My Orders', icon: <FaClipboardList className="text-lg" /> },
-              { path: '/chat', label: 'Chats', icon: <FaComments className="text-lg" />, badge: '3' },
+              { path: '/requests', label: 'Requests', icon: <FaBullhorn className="text-lg" /> },
+              {
+                path: '/notifications',
+                label: 'Notifications',
+                icon: <FaBell className="text-lg" />,
+                badge: unreadCount > 0 ? unreadCount : null,
+              },
+              { path: '/chat', label: 'Chats', icon: <FaComments className="text-lg" /> },
               { path: '/sell', label: 'Sell Product', icon: <FaPlusCircle className="text-lg" /> },
               { path: '/profile', label: 'My Profile', icon: <FaUser className="text-lg" /> },
             ].map((link) => (
               <Link 
                 key={link.path}
                 to={link.path} 
-                className={`flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition ${
+                className={`relative flex items-center justify-between px-4 py-3 rounded-xl text-sm font-semibold transition ${
                   isActive(link.path) 
-                    ? 'bg-indigo-50 text-indigo-600 font-bold' 
+                    ? 'bg-gradient-to-r from-indigo-50 to-violet-50/70 text-indigo-600 font-bold' 
                     : 'text-gray-600 hover:bg-indigo-50/50 hover:text-indigo-600'
                 }`}
               >
+                {isActive(link.path) && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 rounded-r-full bg-gradient-to-b from-indigo-500 to-violet-500" />
+                )}
                 <div className="flex items-center gap-3.5">
                   {link.icon} {link.label}
                 </div>
@@ -84,29 +153,34 @@ export default function MainLayout() {
       <div className="flex-1 flex flex-col min-w-0">
         
         {/* Global Top Navigation Header */}
-        <header className="bg-white px-3 md:px-8 py-3.5 flex items-center justify-between border-b border-gray-200/80 sticky top-0 z-20 shadow-xs gap-2 md:gap-3">
+        <header className="bg-white px-3 md:px-8 py-3.5 flex flex-wrap items-center justify-between border-b border-gray-200/80 sticky top-0 z-20 shadow-xs gap-2 md:gap-3">
           
           {/* Mobile Logo */}
-          <Link to="/" className="flex items-center gap-2 md:hidden shrink-0">
+          <Link to="/" className="flex items-center gap-2 md:hidden shrink-0 order-1 md:order-none">
             <div className="bg-indigo-600 text-white font-black text-lg w-8 h-8 rounded-lg flex items-center justify-center">
               M
             </div>
           </Link>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-xl relative">
+          <form onSubmit={handleSearch} className="order-3 md:order-none w-full md:w-auto md:flex-1 md:max-w-xl relative mt-1 md:mt-0">
             <input 
               type="text" 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search products..." 
-              className="w-full pl-3 pr-8 md:pr-12 py-2 md:py-2.5 bg-gray-50 border border-gray-200 rounded-full text-xs md:text-sm font-medium text-gray-800 placeholder-gray-400 outline-none focus:border-indigo-600 focus:bg-white transition"
+              className="w-full pl-4 pr-10 md:pr-12 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm font-medium text-gray-800 placeholder-gray-400 outline-none focus:border-indigo-600 focus:bg-white transition"
             />
-            <button className="absolute right-1 top-1/2 -translate-y-1/2 bg-indigo-600 text-white p-1.5 md:p-2 rounded-full hover:bg-indigo-700 transition shadow-xs cursor-pointer">
+            <button 
+              type="submit"
+              className="absolute right-1 top-1/2 -translate-y-1/2 bg-indigo-600 text-white p-1.5 md:p-2 rounded-full hover:bg-indigo-700 transition shadow-xs cursor-pointer"
+            >
               <FaSearch className="text-[10px] md:text-xs" />
             </button>
-          </div>
+          </form>
 
           {/* Right Header Icons (Mobile Friendly Icons Included) */}
-          <div className="flex items-center gap-2.5 md:gap-6 shrink-0">
+          <div className="order-2 md:order-none flex items-center gap-1.5 sm:gap-2.5 md:gap-6 shrink-0">
             
             {/* Wishlist Header Icon (Visible on Mobile & Desktop) */}
             <Link 
@@ -117,6 +191,15 @@ export default function MainLayout() {
               <FaHeart className="text-base md:text-xl" />
             </Link>
 
+            {/* Requests Header Icon (Visible on Mobile & Desktop) */}
+            <Link 
+              to="/requests" 
+              className={`p-2 rounded-xl text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition ${isActive('/requests') ? 'text-indigo-600 bg-indigo-50' : ''}`}
+              title="Requests"
+            >
+              <FaBullhorn className="text-base md:text-xl" />
+            </Link>
+
             {/* Chats / Messages Header Icon (Visible on Mobile & Desktop) */}
             <Link 
               to="/chat" 
@@ -124,29 +207,63 @@ export default function MainLayout() {
               title="Chats"
             >
               <FaComments className="text-base md:text-xl" />
-              <span className="absolute top-1 right-1 bg-indigo-600 text-white text-[9px] font-extrabold w-3.5 h-3.5 rounded-full flex items-center justify-center border border-white">3</span>
             </Link>
 
             {/* Notifications */}
-            <div className="relative cursor-pointer p-2 rounded-xl text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition">
+            <Link
+              to="/notifications"
+              className={`relative p-2 rounded-xl text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 transition ${isActive('/notifications') ? 'text-indigo-600 bg-indigo-50' : ''}`}
+              title="Notifications"
+            >
               <FaBell className="text-base md:text-xl" />
-              <span className="absolute top-1 right-1 bg-red-500 text-white text-[9px] font-extrabold w-3.5 h-3.5 rounded-full flex items-center justify-center border border-white">5</span>
-            </div>
-            
-            {/* Profile */}
-            <Link to="/profile" className="flex items-center gap-2 md:pl-4 md:border-l border-gray-200">
-              <img src="https://ui-avatars.com/api/?name=Shubham+Hulawale&background=6C5CE7&color=fff" alt="Shubham" className="w-7 h-7 md:w-9 md:h-9 rounded-full ring-2 ring-indigo-50" />
-              <div className="hidden sm:block">
-                <p className="text-xs md:text-sm font-extrabold text-gray-900 leading-tight">Shubham</p>
-                <p className="text-[10px] md:text-xs text-indigo-600 font-bold">TY IT ▾</p>
-              </div>
+              {unreadCount > 0 && (
+                <span className="absolute top-1 right-1 bg-red-500 text-white text-[9px] font-extrabold min-w-3.5 h-3.5 px-0.5 rounded-full flex items-center justify-center border border-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
             </Link>
+            
+            {user ? (
+              <>
+                {/* Profile */}
+                <Link to="/profile" className="flex items-center gap-2 md:pl-4 md:border-l border-gray-200">
+                    <Avatar
+                      src={user?.profileImage}
+                      name={user?.fullName}
+                      textClassName="text-[11px]"
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                    <div className="hidden sm:block">
+                    <p className="text-xs md:text-sm font-extrabold text-gray-900 leading-tight">{user?.fullName}</p>
+                    <p className="text-[10px] md:text-xs text-indigo-600 font-bold">{user?.year} {user?.department} ▾</p>
+                  </div>
+                </Link>
+
+                <button
+                  onClick={() => {
+                    logout();
+                    navigate("/login");
+                  }}
+                  className="ml-2 md:ml-4 bg-red-500 hover:bg-red-600 text-white px-3 md:px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition">
+                  Logout
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/login"
+                className="ml-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-xs md:text-sm font-semibold transition"
+              >
+                Login
+              </Link>
+            )}
           </div>
         </header>
 
         {/* Dynamic Page Content */}
         <main className="flex-1 p-4 md:p-8">
-          <Outlet />
+          <div key={location.pathname} className="animate-fade-in">
+            <Outlet />
+          </div>
         </main>
 
       </div>
@@ -238,7 +355,11 @@ export default function MainLayout() {
         >
           <FaShoppingCart className="text-lg" />
           <span className="text-[10px]">Cart</span>
-          <span className="absolute -top-1 right-1 bg-indigo-600 text-white text-[9px] font-black w-3.5 h-3.5 rounded-full flex items-center justify-center">2</span>
+          {cartCount > 0 && (
+            <span className="absolute -top-1 right-1 bg-indigo-600 text-white text-[9px] font-black min-w-3.5 h-3.5 px-0.5 rounded-full flex items-center justify-center">
+              {cartCount > 9 ? "9+" : cartCount}
+            </span>
+          )}
         </Link>
       </nav>
 

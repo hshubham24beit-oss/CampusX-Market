@@ -93,6 +93,16 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
 
+    resetPasswordToken: {
+      type: String,
+      default: null,
+    },
+
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
+    },
+
         googleId: {
         type: String,
         default: ""

@@ -1,6 +1,5 @@
-// src/context/AuthContext.jsx
-import React, { createContext, useState, useEffect } from 'react';
-import { authAPI } from '../api/auth.api';
+import React, { createContext, useState, useEffect } from "react";
+import { authAPI } from "../api/auth.api";
 
 export const AuthContext = createContext(null);
 
@@ -8,75 +7,95 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Check login on page refresh
   useEffect(() => {
     const checkAuthStatus = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const res = await authAPI.getCurrentUser();
-          setUser(res.data?.user || res.user || res.data);
-        } catch (err) {
-          console.error('Session expired or invalid token:', err);
-          localStorage.removeItem('token');
-          setUser(null);
-        }
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setLoading(false);
+        return;
       }
-      setLoading(false);
+
+      try {
+        const res = await authAPI.getCurrentUser();
+        setUser(res.data.user);
+      } catch (err) {
+        console.error("Session expired:", err);
+        localStorage.removeItem("token");
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
     };
+
     checkAuthStatus();
   }, []);
 
+  // Login
   const login = async (credentials) => {
-    const res = await authAPI.login(credentials);
-    const token = res.data?.token || res.token;
-    const userData = res.data?.user || res.user;
-    if (token) {
-      localStorage.setItem('token', token);
-      setUser(userData);
-    }
+  const res = await authAPI.login(credentials);
+
+  const token = res.data.data.token;
+  const userData = res.data.data.user;
+
+  localStorage.setItem("token", token);
+  setUser(userData);
+
+  return res;
+};
+
+  // Google Login
+  const handleGoogleLogin = async (credentialResponse) => {
+    const res = await authAPI.googleLogin({
+      token: credentialResponse.credential,
+    });
+
+    const token = res.data.data.token;
+    const userData = res.data.data.user;
+
+    localStorage.setItem("token", token);
+    setUser(userData);
+
     return res;
   };
 
+  // Refresh current user after profile edits
+  const refreshUser = async () => {
+    const res = await authAPI.getCurrentUser();
+    setUser(res.data.user);
+    return res.data.user;
+  };
+
+  // Register
   const register = async (data) => {
     const res = await authAPI.register(data);
-    const token = res.data?.token || res.token;
-    const userData = res.data?.user || res.user;
-    if (token) {
-      localStorage.setItem('token', token);
-      setUser(userData);
-    }
+
+    // Don't login automatically after registration
+    // User should login manually
+
     return res;
   };
 
-  const handleGoogleLogin = async (credentialResponse) => {
-    const payload = {
-      token: credentialResponse.credential,
-      department: "OTHER",
-      year: "FY"
-    };
-    const res = await authAPI.googleLogin(payload);
-    const token = res.data?.token || res.token;
-    const userData = res.data?.user || res.user;
-    if (token) {
-      localStorage.setItem('token', token);
-      setUser(userData);
-    }
-    return res;
-  };
-
-  const logout = async () => {
-    try {
-      await authAPI.logout();
-    } catch (e) {
-      console.error(e);
-    } finally {
-      localStorage.removeItem('token');
-      setUser(null);
-    }
+  // Logout
+  const logout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated: !!user, login, register, handleGoogleLogin, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        isAuthenticated: !!user,
+        login,
+        register,
+        handleGoogleLogin,
+        refreshUser,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

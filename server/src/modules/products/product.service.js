@@ -1,245 +1,209 @@
+import mongoose from "mongoose";
 import Product from "./product.model.js";
+import Category from "../categories/category.model.js";
 
+const escapeRegex = (value = "") =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-export const createProduct = async(productData,userId)=>{
+const resolveCategory = async (categoryValue) => {
+  if (!categoryValue) {
+    throw new Error("Category is required.");
+  }
 
+  if (mongoose.Types.ObjectId.isValid(categoryValue)) {
+    const category = await Category.findById(categoryValue);
 
-    const product = await Product.create({
+    if (category) {
+      return category._id;
+    }
+  }
 
-        ...productData,
+  const category = await Category.findOne({
+    name: { $regex: `^${escapeRegex(categoryValue)}$`, $options: "i" },
+  });
 
-        seller:userId
+  if (!category) {
+    throw new Error("Category not found.");
+  }
 
-    });
+  return category._id;
+};
 
+const ALLOWED_UPDATE_FIELDS = [
+  "title",
+  "description",
+  "price",
+  "condition",
+  "images",
+  "quantity",
+  "pickupLocation",
+  "pickupInstructions",
+  "status",
+];
 
-    return product;
+export const createProduct = async (productData, userId) => {
+  const categoryId = await resolveCategory(productData.category);
 
+  const product = await Product.create({
+    title: productData.title,
+    description: productData.description,
+    price: productData.price,
+    category: categoryId,
+    condition: productData.condition,
+    images: productData.images || [],
+    quantity: productData.quantity || 1,
+    pickupLocation: productData.pickupLocation || "",
+    pickupInstructions: productData.pickupInstructions || "",
+    seller: userId,
+  });
+
+  return product;
 };
 
 export const getAllProducts = async (query) => {
+  const filter = {
+    status: "available",
+  };
 
-    const filter = {
+  if (query.search) {
+    const safeSearch = escapeRegex(String(query.search).trim());
 
-        status: "available"
+    filter.$or = [
+      { title: { $regex: safeSearch, $options: "i" } },
+      { description: { $regex: safeSearch, $options: "i" } },
+    ];
+  }
 
-    };
+  if (query.category && query.category !== "All") {
+    try {
+      filter.category = await resolveCategory(query.category);
+    } catch (error) {
+      // Unknown category should return an empty result, not every product.
+      filter.category = new mongoose.Types.ObjectId();
+    }
+  }
 
+  if (query.condition) {
+    filter.condition = query.condition;
+  }
 
-    // Search by title or description
+  const minPrice = Number(query.minPrice);
+  const maxPrice = Number(query.maxPrice);
 
-    if(query.search){
+  if (Number.isFinite(minPrice) || Number.isFinite(maxPrice)) {
+    filter.price = {};
 
-        filter.$or = [
-
-            {
-                title:{
-                    $regex: query.search,
-                    $options:"i"
-                }
-            },
-
-            {
-                description:{
-                    $regex: query.search,
-                    $options:"i"
-                }
-            }
-
-        ];
-
+    if (Number.isFinite(minPrice)) {
+      filter.price.$gte = minPrice;
     }
 
-        // Filter by category
-
-    if (query.category) {
-
-        filter.category = query.category;
-
+    if (Number.isFinite(maxPrice)) {
+      filter.price.$lte = maxPrice;
     }
+  }
 
-        // Price Filter
+  let sortOption = { createdAt: -1 };
 
-    if (query.minPrice || query.maxPrice) {
+  if (query.sort === "priceLow") {
+    sortOption = { price: 1 };
+  } else if (query.sort === "priceHigh") {
+    sortOption = { price: -1 };
+  } else if (query.sort === "oldest") {
+    sortOption = { createdAt: 1 };
+  }
 
-        filter.price = {};
+  const page = Math.max(Number(query.page) || 1, 1);
+  const limit = Math.min(Math.max(Number(query.limit) || 10, 1), 50);
+  const skip = (page - 1) * limit;
 
-        if (query.minPrice) {
-            filter.price.$gte = Number(query.minPrice);
-        }
-
-        if (query.maxPrice) {
-            filter.price.$lte = Number(query.maxPrice);
-        }
-
-    }
-
-        // Condition Filter
-
-    if (query.condition) {
-
-        filter.condition = query.condition;
-
-    }
-
-        let sortOption = {
-        createdAt: -1
-    };
-
-    if (query.sort === "priceLow") {
-
-        sortOption = {
-            price: 1
-        };
-
-    }
-    else if (query.sort === "priceHigh") {
-
-        sortOption = {
-            price: -1
-        };
-
-    }
-    else if (query.sort === "latest") {
-
-        sortOption = {
-            createdAt: -1
-        };
-
-    }
-
-    const page = Number(query.page) || 1;
-
-    const limit = Number(query.limit) || 10;
-
-    const skip = (page - 1) * limit;
-
-const products = await Product.find(filter)
-
-    .populate(
-        "seller",
-        "fullName email department year profileImage"
-    )
-
-    .populate(
-        "category",
-        "name description"
-    )
-
+  const products = await Product.find(filter)
+    .populate("seller", "fullName email department year profileImage")
+    .populate("category", "name description")
     .sort(sortOption)
-
     .skip(skip)
-
     .limit(limit);
 
-    const totalProducts = await Product.countDocuments(filter);
+  const totalProducts = await Product.countDocuments(filter);
+  const totalPages = Math.max(Math.ceil(totalProducts / limit), 1);
 
-    const totalPages = Math.ceil(totalProducts / limit);
-
-
-    return {
-
+  return {
     products,
-
     page,
-
     limit,
-
     totalPages,
-
-    totalProducts
-
-};
+    totalProducts,
+  };
 };
 
 export const getProductById = async (productId) => {
+  if (!mongoose.Types.ObjectId.isValid(productId)) {
+    throw new Error("Product not found.");
+  }
 
-        const product = await Product.findById(productId)
-        .populate(
-            "seller",
-            "fullName email department year profileImage"
-        )
-        .populate(
-            "category",
-            "name description"
-        );
+  const product = await Product.findByIdAndUpdate(
+    productId,
+    { $inc: { views: 1 } },
+    { new: true }
+  )
+    .populate("seller", "fullName email department year profileImage")
+    .populate("category", "name description");
 
+  if (!product) {
+    throw new Error("Product not found.");
+  }
 
-    if (!product) {
-        throw new Error("Product not found.");
-    }
-
-
-    return product;
-
+  return product;
 };
 
+export const updateProduct = async (productId, userId, updateData) => {
+  const product = await Product.findById(productId);
 
-export const updateProduct = async (
+  if (!product) {
+    throw new Error("Product not found.");
+  }
+
+  if (product.seller.toString() !== userId) {
+    throw new Error("You are not allowed to update this product.");
+  }
+
+  const filteredData = {};
+
+  ALLOWED_UPDATE_FIELDS.forEach((field) => {
+    if (updateData[field] !== undefined) {
+      filteredData[field] = updateData[field];
+    }
+  });
+
+  if (updateData.category !== undefined) {
+    filteredData.category = await resolveCategory(updateData.category);
+  }
+
+  const updatedProduct = await Product.findByIdAndUpdate(
     productId,
-    userId,
-    updateData
-) => {
-
-    const product = await Product.findById(productId);
-
-
-    if (!product) {
-        throw new Error("Product not found.");
+    filteredData,
+    {
+      new: true,
+      runValidators: true,
     }
+  )
+    .populate("seller", "fullName email department year profileImage")
+    .populate("category", "name description");
 
-
-    // Check if logged-in user is the seller
-    if (product.seller.toString() !== userId) {
-
-        throw new Error(
-            "You are not allowed to update this product."
-        );
-
-    }
-
-
-    const updatedProduct = await Product.findByIdAndUpdate(
-
-        productId,
-
-        updateData,
-
-        {
-            new: true,
-            runValidators: true
-        }
-
-    );
-
-
-    return updatedProduct;
-
+  return updatedProduct;
 };
 
 export const deleteProduct = async (productId, userId) => {
+  const product = await Product.findById(productId);
 
-    const product = await Product.findById(productId);
+  if (!product) {
+    throw new Error("Product not found.");
+  }
 
+  if (product.seller.toString() !== userId) {
+    throw new Error("You are not allowed to delete this product.");
+  }
 
-    if (!product) {
-        throw new Error("Product not found.");
-    }
+  await Product.findByIdAndDelete(productId);
 
-
-    // Check ownership
-    if (product.seller.toString() !== userId) {
-
-        throw new Error(
-            "You are not allowed to delete this product."
-        );
-
-    }
-
-
-    await Product.findByIdAndDelete(productId);
-
-
-    return true;
-
+  return true;
 };

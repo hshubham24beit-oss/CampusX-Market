@@ -192,13 +192,41 @@ export const editProduct = async(req,res)=>{
 
         };
 
+        delete updateData.existingImages;
 
 
-        // Add images only when new images are uploaded
 
-        if(imageUrls.length > 0){
+        // Merge kept existing images with newly uploaded images
 
-            updateData.images = imageUrls;
+        let keptImages = [];
+
+        if (req.body.existingImages) {
+
+            try {
+
+                const parsed = JSON.parse(req.body.existingImages);
+
+                if (Array.isArray(parsed)) {
+
+                    keptImages = parsed.filter(
+                        (url) => typeof url === "string"
+                    );
+
+                }
+
+            } catch (error) {
+
+                keptImages = [];
+
+            }
+
+        }
+
+
+
+        if (imageUrls.length > 0 || req.body.existingImages) {
+
+            updateData.images = [...keptImages, ...imageUrls];
 
         }
 

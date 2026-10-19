@@ -1,18 +1,15 @@
 // src/components/common/ProtectedRoute.jsx
 import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth'; // or useContext(AuthContext)
+import { useAuth } from '../../hooks/useAuth';
+import Loader from './Loader';
 
 export default function ProtectedRoute() {
   const { user, loading } = useAuth();
 
-  // Show a loading screen while checking authentication status
+  // Show a branded loading screen while checking authentication status
   if (loading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <p>Loading...</p>
-      </div>
-    );
+    return <Loader fullScreen text="Preparing your campus market..." />;
   }
 
   // If user is logged in, render child routes (Outlet), otherwise redirect to /login

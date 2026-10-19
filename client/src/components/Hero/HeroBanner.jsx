@@ -15,7 +15,11 @@ export default function HeroBanner({
 }) {
   return (
     <div className={`relative overflow-hidden rounded-3xl bg-gradient-to-r ${gradient} p-6 sm:p-8 lg:p-10 border ${borderColor} shadow-xs my-2`}>
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+      {/* Soft decorative glow */}
+      <div className="pointer-events-none absolute -top-16 -right-10 w-56 h-56 rounded-full bg-indigo-300/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-20 left-10 w-56 h-56 rounded-full bg-violet-300/20 blur-3xl" />
+
+      <div className="relative grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
         
         {/* Left Content */}
         <div className="md:col-span-7 lg:col-span-8 space-y-3">
@@ -34,7 +38,7 @@ export default function HeroBanner({
           <div className="pt-2">
             <Link
               to={ctaLink}
-              className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm px-6 py-3 rounded-2xl transition duration-200 shadow-md shadow-indigo-200 cursor-pointer"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 active:scale-95 text-white font-extrabold text-xs sm:text-sm px-6 py-3 rounded-2xl transition duration-200 shadow-md shadow-indigo-200 cursor-pointer"
             >
               {ctaText} <FaArrowRight className="text-xs" />
             </Link>

@@ -1,20 +1,48 @@
-// src/api/auth.api.js
-import API from './axios';
+import API from "./axios";
 
 export const authAPI = {
-  login: async (credentials) => {
-    return await API.post('/auth/login', credentials);
-  },
+  // Register User
   register: async (data) => {
-    return await API.post('/auth/register', data);
+    const payload = {
+      fullName: data.name || data.fullName,
+      email: data.email,
+      password: data.password,
+      department: data.department,
+      year: data.year,
+      phone: data.phone,
+    };
+
+    return API.post("/auth/register", payload);
   },
+
+  // Login User
+  login: async (credentials) => {
+    return API.post("/auth/login", credentials);
+  },
+
+  // Google Login
   googleLogin: async (loginData) => {
-    return await API.post('/auth/google-login', loginData);
+    return API.post("/auth/google-login", loginData);
   },
+
+  // Forgot Password
+  forgotPassword: async (email) => {
+    return API.post("/auth/forgot-password", { email });
+  },
+
+  // Reset Password
+  resetPassword: async (token, password) => {
+    return API.post("/auth/reset-password", { token, password });
+  },
+
+  // Get Logged-in User
   getCurrentUser: async () => {
-    return await API.get('/auth/me');
+    return API.get("/auth/me");
   },
+
+  // Logout
   logout: async () => {
-    return await API.post('/auth/logout');
-  }
+    localStorage.removeItem("token");
+    return Promise.resolve();
+  },
 };

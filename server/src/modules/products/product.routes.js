@@ -17,11 +17,11 @@ router.delete(
     removeProduct
 );
 
-router.put(
-    "/:id",
-    protect,
-    editProduct
-);
+// router.put(
+//     "/:id",
+//     protect,
+//     editProduct
+// );
 
 router.get(
     "/:id",
@@ -38,6 +38,13 @@ router.put(
     protect,
     upload.array("images",5),
     editProduct
+);
+
+router.post(
+    "/",
+    protect,
+    upload.array("images", 5),
+    addProduct
 );
 
 
