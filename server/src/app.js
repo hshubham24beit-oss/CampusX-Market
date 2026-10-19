@@ -1,3 +1,6 @@
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -17,11 +20,14 @@ import orderRoutes from "./modules/orders/order.routes.js";
 import requestRoutes from "./modules/requests/request.routes.js";
 const app = express();
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const clientDist = path.resolve(__dirname, "../../client/dist");
+
 // Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
-app.use(helmet());
+app.use("/api", helmet());
 app.use(morgan("dev"));
 app.use(cookieParser());
 app.use("/api/auth", authRoutes);
@@ -37,7 +43,7 @@ app.use("/api/orders",orderRoutes);
 app.use("/api/requests", requestRoutes);
 
 // Test Route
-app.get("/", (req, res) => {
+app.get("/api/health", (req, res) => {
     res.status(200).json({
         success: true,
         message: "CampusX Market Backend is Running Successfully!"
@@ -53,6 +59,15 @@ app.get("/api/test-auth", protect, (req,res)=>{
     });
 
 });
+
+// Serve built React app (single-service deployment)
+if (fs.existsSync(clientDist)) {
+    app.use(express.static(clientDist));
+
+    app.get(/^\/(?!api).*/, (req, res) => {
+        res.sendFile(path.join(clientDist, "index.html"));
+    });
+}
 
 // 404 Handler
 app.use((req, res) => {
